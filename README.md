@@ -8,6 +8,12 @@ Este repositorio contiene la implementación oficial del código para el proyect
 
 El proyecto implementa dos configuraciones de la arquitectura Transformer (Estándard y 'Deep Encoder / Shallow Decoder') optimizada para realizar traducción automática en un escenario de bajos recursos (*Low-Resource NMT*), utilizando un corpus paralelo construido a partir de textos bíblicos y literatura en PDF.
 
+## Paper del trabajo
+
+El reporte (paper) del presente trabajo se encuentra disponible en:
+
+- **ResearchGate:** [https://doi.org/10.13140/RG.2.2.31265.88166]
+
 ## 📂 Estructura del Repositorio
 
 El código está organizado según el flujo de trabajo del proyecto:
@@ -21,7 +27,7 @@ El código está organizado según el flujo de trabajo del proyecto:
 - **`tokenization.ipynb`**: Entrenamiento de un tokenizador BPE (Byte-Pair Encoding) utilizando `SentencePiece`. Generación de vocabulario y archivos tokenizados (`.ids`).
 
 ### 3. Modelado y Entrenamiento
-- **`training_AymaraToSpanish_Standard.ipynb`, `training_SpanishToAymara_Standard.ipynb`, `training_AymaraToSpanish_DeepEncoder-ShallowDecoder.ipynb`, `training_SpanishToAymara_DeepEncoder-ShallowDecoder.ipynb`**: Implementación en PyTorch del modelo Transformer.
+- **`training_AymaraToSpanish_Standard.ipynb`, `training_SpanishToAymara_Standard.ipynb`, `training_AymaraToSpanish_DeepShallow.ipynb`, `training_SpanishToAymara_DeepShallow.ipynb`**: Implementación en PyTorch del modelo Transformer. Se entrenó con 147,359 pares.
     - Incluye clases para `Dataset`, `DataLoader` y el bucle de entrenamiento/validación.
     - Implementa *Beam Search Decoding* para la inferencia.
     - Calcula métricas BLEU utilizando `sacrebleu`.
@@ -45,16 +51,22 @@ El proyecto implementa y compara dos variantes de la arquitectura Transformer pa
 | **Baseline** | 6 | 6 | 512 | 0.1 | Arquitectura estándar (Vaswani et al., 2017). |
 | **Deep-Shallow** | 12 | 2 | 512 | 0.3 | **Propuesta**. Utiliza *Pre-Normalization* (`norm_first=True`) y un Encoder profundo para capturar la compleja morfología aglutinante del Aymara, junto con un Decoder superficial para evitar alucinaciones. |
 
-## 📊 Resultados Preliminares
+## 📊 Resultados
 
-La evaluación del modelo se realizó utilizando la métrica **BLEU** sobre un conjunto de prueba (*Test Set*) reservado (aprox. 8,000 oraciones), aplicando *Beam Search Decoding* con un ancho de 5.
+La evaluación del modelo se realizó utilizando la métrica **BLEU** sobre un conjunto de prueba (*Test Set*) reservado (8187 pares), aplicando *Beam Search Decoding* con un ancho de 5.
 
-| Dirección de Traducción | BLEU Score | Observaciones |
-| :--- | :---: | :--- |
-| **Aymara $\rightarrow$ Español** | **28.95** | Resultado competitivo para un escenario de bajos recursos. El modelo logra generalizar bien hacia la gramática del español. |
-| **Español $\rightarrow$ Aymara** | **13.37** | El menor puntaje refleja la complejidad de generar una lengua **aglutinante**. El modelo enfrenta el desafío de predecir la combinación exacta de sufijos aymaras a partir del español. |
+Se compararon dos configuraciones arquitectónicas para evaluar el impacto de la profundidad del modelo:
+1.  **Standard:** 6 capas Encoder / 6 capas Decoder.
+2.  **Deep-Shallow:** 12 capas Encoder / 2 capas Decoder.
 
-> ## ⚠️ Disponibilidad de los Datos y Copyright
+| Dirección de Traducción | Arquitectura | BLEU Score | Observaciones |
+| :--- | :--- | :---: | :--- |
+| **Aymara $\rightarrow$ Español** | **Standard** | **28.95** | Mejor resultado. Generaliza correctamente hacia la gramática del español. |
+| | Deep-Shallow | 28.61 | Resultado muy competitivo, virtualmente idéntico al baseline, demostrando que un decoder superficial es eficiente para generar español. |
+| **Español $\rightarrow$ Aymara** | **Standard** | **13.37** | El decoder profundo (6 capas) maneja mejor la compleja morfología aglutinante del Aymara. |
+| | Deep-Shallow | 11.81 | Se observa una caída en el rendimiento; sugiriendo que para generar Aymara (lengua rica en sufijos) se requiere mayor profundidad en el decoder. |
+
+## ⚠️ Disponibilidad de los Datos y Copyright
 
 **Importante:** Este repositorio de código **NO contiene los datasets crudos** (textos bíblicos originales ni el archivo PDF del libro) debido a restricciones de propiedad intelectual (*Copyright*).
 
